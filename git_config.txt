@@ -1,0 +1,38 @@
+### Execute the following commands from any directory in order to set up some git configurations      ###
+### --global flag places these configurations in ~/.gitconfig so they will apply to all of your repos ###
+
+# Used as identification for when you commit #
+git config --global user.name "Your Name"
+git config --global user.email "your.name@cern.ch"
+
+# make some push operations more straightforward
+git config --global push.default simple
+
+# addresses an issue with large pushes via plain http or krb5.
+# https://cern.service-now.com/service-portal/article.do?n=KB0001785
+git config --global http.postBuffer 209715200
+
+# Add some SVN-like aliases
+git config --global alias.st status
+git config --global alias.br branch
+git config --global alias.co checkout
+git config --global alias.ci commit
+
+# Set merge conflicts to display in diff3 format (default is to display the two files to be merged)
+# If enabled, git shows your side, the side being merged, and (here's what's new) the common ancestor between them in the conflicting file
+git config --global merge.conflictstyle diff3
+
+# How to set a default editor to use when writing commit messages
+# Convention for writing git commits: http://chris.beams.io/posts/git-commit/
+# -n (open a new window) and -w (git will wait until window is closed before trying to continue)
+# Use your favorite editor - here are some examples (use what's in "" as the command you would type to open your editor):
+git config --global core.editor "subl -n -w"
+git config --global core.editor "vim"
+git config --global core.editor "emacs"
+etc.
+
+### Add directly in ~/gitconfig for pretty log / history viewing
+
+[alias]
+	hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
+	lg =  log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
