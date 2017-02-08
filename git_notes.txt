@@ -1,0 +1,1829 @@
+git init
+git init <directory>
+	Create an empty Git repository in the specified directory. Running this command will create a new folder called directory containing nothing but the .git subdirectory.
+git init --bare <directory>
+	Initialize an empty Git repository, but omit the working directory. Shared repositories should always be created with the --bare flag. Conventionally, repositories initialized with the --bare flag end in .git. For example, the bare version of a repository called my-project should be stored in a directory called my-project.git.
+	Central repositories should always be created as bare repositories because pushing branches to a non-bare repository has the potential to overwrite changes. Think of --bare as a way to mark a repository as a storage facility, as opposed to a development environment. This means that for virtually all Git workflows, the central repository is bare, and the developers local repositories are non-bare.
+
+git clone
+
+	The git clone command copies an existing Git repository. This is sort of like svn checkout, except the "working copy" is a fully-fledged Git repository - it has its own history, manages its own files, and is a completely isolated environment from the original repository. Unlike SVN, Git makes no distinction between the working copy and the central repository - they are all fully-fledged Git repositories.
+
+	note: cloning a repository just means to make a copy of one. This can either be done from github to your local machine, or you can even clone a local directory into another local area. Git automatically sets up a remote pointing to the repository you cloned from
+
+	forking: only makes sense in the context of GitHub (or similar tools) in which the site makes a clone of a repository, but references original repository to save space and makes it easier to suggest changes for the original repository
+
+	To add others as collaborators to your repository on GitHub, go to settings -> collaborators and then adding their GitHub username
+
+git clone url name_of_local_repo
+
+git checkout
+
+	note: git checkout shapes your working copy by checking out things from the (local) git repository, but it's a Swiss knife, and can do lots of things, including discarding changes you did (so use it wisely). It mostly serves the purpose of switching to other branches, but also to undo changes to your working copy w.r.t the current branch.
+
+	Also, note that when moving to another branch, if the target branch has a different content for a modified file, you will be prevented from moving to the other branch (and will need to checkout or commit your changes first)
+
+	TODO: 'git co branch' seems to both switch to a new branch and set up the branch to track the remote branch of the same name
+
+git checkout master
+git checkout -b new_branch_name
+
+	note: Equivalent to 'git branch new_branch_name' followed by 'git checkout new_branch_name'. Since these are the commands you would use to make and switch to a new branch, it's nice that there is a one line version. This is also the command you would run if you were in a detached head state, made a new commit, and wanted to retain changes
+
+git checkout -b new_branch_name origin/master
+	new_branch_name is set to track origin/master
+
+git checkout -t <remote>/<remote-branch-name>
+	create a local branch wht the same name as the remote branch, tracking that remote branch
+
+git checkout path
+
+	note: moves your working copy to represent the state of the current branch (also HEAD). This use of checkout WILL delete any changes you may have locally (under that path)
+
+	git checkout my-new-feature
+	git checkout .
+	-will move to the my-new-feature branch and delete any changes made to the working copy
+
+git checkout -- <filename>
+
+	If you mess up, you can replace the changes in your working tree with the last content in head - changes already added to the index, as well as new files, will be kept
+
+git checkout <commit> <file>
+
+	Checkout a previous version of a file. This turns the <file> that resides in the working directory into an exact copy of the one from <commit> and adds it to the staging area
+
+git log
+git log --stat
+
+	note: stat option shows which files were changed in each commit
+
+git log --graph --oneline master branch_from_master
+git log -n1
+
+	note: -n1 only shows most recent commit
+
+git log --grep="<pattern>"
+
+	search for commits with a commit message that matches <pattern>
+
+git log <since>..<until>
+
+	shows only commits that occur between <since> and <until>. Both can either be a commit ID, a branch name, HEAD, or any other kind of revision reference.
+
+	e.g.
+
+	git log --oneline master..origin/master
+	(if you just fetched from origin and want to see what was changed)
+
+git log <file>
+
+	only display commits that include the specified file
+
+git log <path>
+
+	only display commits that include files in the specified path
+
+git log --oneline -5 --author dshope --before "Wed Jan 25 2017"
+
+git log --graph --decorate --oneline
+
+git log -p
+
+	Display the patch representing each commit (shows full diff of each commit, most detailed view of history)
+
+git log --author="John Smith" -p hello.py
+
+git bisect
+
+	Useful in establishing where a regression took place in your project history (instead of having to checkout each previous commit and test, git bisect helps to reduce the number you have to check)
+
+gitk
+
+	The git repository gui browser
+
+git status
+
+	View the state of the working directory and staging area
+
+git diff
+git diff --staged
+	diff comparing staging area with current branch
+git diff commitID_1 commitID_2
+git diff path
+git diff --base <filename>
+	view difference against the base file
+git diff release/21.0.1..release/21.0.8                                                   # diff btw two releases
+git diff release/21.0.1..release/21.0.8 Tools/PyJobTransforms                             # diff btw two releases of a single package
+git diff nightly/21.0/2016-12-01T2230..nightly/21.0/2016-12-07T2230 Tools/PyJobTransforms # diff btw two nightlies
+
+
+git show commitID1
+
+	note: compares given commit to its parent commit
+
+git add
+
+	moves changes from the working directory to the Git staging area. The staging area is where you prepare a snapshot of a set of changes before committing them to the official history (in local directory)
+
+	The git add command should not be confused with svn add, which adds a file to the repository. Instead, git add works on the more abstract level of "changes". This means that git add needs to be called every time you alter a file and you want to commit it, whereas svn add only needs to be called once for each file. It may sound redundant, but this workflow makes it much easier to keep a project organized and only commit exactly what you desire!
+
+git add -p
+
+	Begin an interactive staging session that lets you choose portions of a file to add to the next commit. This will present you with a chunk of changes and prompt you for a command. Use y to stage the chunk, n to ignore the chunk, s to split it into smaller chunks, e to manually edit the chunk, and q to exit.
+
+The Staging Area
+
+	It helps to think of it as a buffer between the working directory and the project history.
+	Instead of committing all of the changes you've made since the last commit, the stage lets you group related changes into highly focused snapshots before actually committing it to the project history. This means you can make all sorts of edits to unrelated files, then go back and split them up into logical commits by adding related changes to the stage and commit them piece-by-piece. As in any revision control system, it’s important to create atomic commits so that it’s easy to track down bugs and revert changes with minimal impact on the rest of the project.
+
+	Just as the staging area is a buffer between the working directory and the project history, each developer's local repository is a buffer between their contributions and the central repository.
+
+	Also called the index
+
+git commit
+
+	commits the staged snapshot from the staging area to the project history. While they share the same name, this command is nothing like svn commit. Snapshots are committed to the local repository, and this requires absolutely no interaction with other Git repositories (can even be done on an airplane with no internet connection)
+
+git commit -m "commit message"
+git commit -a
+
+	Commit a snapshot of all changes in the working directory. This only includes modifications to tracked files. Not advised, since it bypasses the staging area!
+
+git commit --amend
+
+	change the current commit
+	Never amend commits that have been pushed to a public repository! Amended commits are actually entirely new commits, and the previous commit is removed from the project history.
+	This has the same consequences as resetting a public snapshot. If you amend a commit that other developers have based their work on, it will look like the basis of their work vanished from the project history. This is a confusing situation for developers to be in and it’s complicated to recover from.
+
+	--no-edit flag will allow you to make amendment withough changing its commit message.
+
+git rm
+	delete a file from the repository
+git rm --cached
+	file will be deleted from the repository, but will remain in your working directory as an ignored file
+	e.g.
+	echo debug.log >> .gitignore
+	git rm --cached debug.log
+	git commit -m "Start ignoring debug.log"
+
+git branch
+git branch new_branch_name
+git branch new_branch_name BranchoffHash
+git branch -d <branch>
+
+	note: deleting a branch only deletes the label. Of course if the deleted branch hasn't been merged with another, the commits starting from the branch point will be effectively lost.
+
+	This is the "safe" delete option in that Git prevents you from deleting the branch if it has unmerged changes.
+
+git branch -D <branch>
+
+	Force deletes branch, even if it has unmerged changes
+
+git branch -m <branch>
+
+	Rename the current branch to <branch>
+
+git branch -av
+
+	note: to display the known branches, local and remote (from -a) and with the hash they point to (with -v)
+
+	Also, -r shows remote branches only
+
+git branch -vv
+
+	also show branch tracking
+
+git branch -f master HEAD~3
+	forces master to point to the commit which is 3 before the currently checked out commit
+
+git branch --set-upstream origin/master foo
+	sets the foo branch to track origin/master. If foo is currently checked out, you can even leave it off the end (-u option also works)
+
+git branch --unset-upstream
+	remove tracking relationship for currently checked-out branch
+
+git branch my-new-feature --no-track upstream/master
+	create a new branch named my-new-feature from upstream/master, but don't set up to track it
+
+for remote in 'git branch -r'; do git branch --track $remote; done
+	create a local branch for each remote branch and have them all track their respective remote branch
+
+git remote
+
+	note: like branch command, but for viewing remotes (a remote in the local repository is basically a reference to another repository)
+
+git remote add origin git@github.com:dshope11/reflections.git
+
+	note: to add remote repositories
+
+git remote -v
+
+	note: v for verbose (to show urls), also available for branch command
+
+git remote rm remote_URL
+
+git remote rename <old-name> <new-name>
+
+git push origin master
+
+	git push <remote> <place>
+	note: push optionally takes two arguments - the remote you want to send changes to and the name of the local branch you'd like to push (by default, branch on remote will have the same name as branch pushed). Also, while this command updates the local repository, it also updates the local branch to point to the new commit if it is the one currently checked out.
+
+	git won't let you push when it results in a non-fast-forward merge in the destination repository
+	'git push <remote> --force' allows you to force a push even if it results in a non-fast-forward merge, but don't use this flag unless you're absolutely sure you know what you're doing!
+	if the remote history has diverged from your history, you should pull the remote branch and merge it into your local one and then try pushing again (this is similar to how SVN makes you synchronize with the central repo via svn update before committing a changeset)
+
+	this command translates to this in English:
+
+	Go to the branch named "master" in my repository, grab all the commits, and then go to the branch "master" on the remote named "origin." Place whatever commits are missing on that branch and then tell me when you're done.
+
+	By specifying master as the "place" argument, we told git where the commits will come from and where the commits will go. It's essentially the "place" or "location" to synchronize between the two repositories.
+
+	Keep in mind that since we told git everything it needs to know (by specifying both arguments), it totally ignores where we are checked out!
+
+	also, more advanced:
+	git push origin <source>:<destination>
+	e.g.
+	git push origin foo:bar
+		Allows you to specify the foo source branch to get pushed to the bar destination on origin (even if bar doesn't exist on the remote, git will create it automatically)
+		<source>:<destination> is commonly refered to as a colon refspec (fancy name for a location that git can figure out, like the branch foo or even just HEAD~1
+
+	also, there exists the concept of pushing "nothing" to a remote branch by not specifying a source:
+		git push origin :foo
+	This actually deletes the foo branch on the remote! (kind of makes sense)
+
+
+
+git push --set-upstream origin master
+
+	note: these options allow remote origin's master branch to be assigned as the upstream branch to the local master branch (-u option also works)
+
+	you can think of git push as publishing your work!
+
+git push <remote> --all
+
+	push all of your local branches to the specified remote
+
+git push <remote> --tags
+
+	tags are not automatically pushed when you push a branch or use the --all option. The --tags flag sends all of your local tags to the remote repository.
+
+## Only push to bare repositories (those ending in .git by convention)
+
+	since pushing messes with the remote branch structure, it's important to never push to another developer's repository (the one where they have their working copy)
+	Because bare repos don't have a working directory, it's impossible to interrupt anybody's development
+
+git fetch <remote>
+
+	downloads the commits that the remote has but are missing from our local repository, and
+	updates where our remote branches point (for instance, origin/master)
+	-essentially brings our local representation of the remote repository into synchronization with what the actual remote repository looks like (right now).
+	-git fetch, however, does not change anything about your local state. It will not update your master branch or change anything about how your file system looks right now (that's what git pull is for!)
+	-the downloaded commits are stored as remote branches
+	-think of git fetch as a download step
+
+git fetch <remote> <branch>
+
+	only fetch the specified branch
+
+	also, more advanced:
+	git fetch origin <source>:<destination> works as well, but not commonly used. Here, source is on remote and destination is local (remote branches don't get updated since you specified a destination for the fetch. Not often used, because in the default case the destination is just the remote branch stored locally (and it gets updated, which is usually what you want)
+
+	fetching "nothing" to a place locally actually makes a new branch
+
+## remote branches:
+
+	just like normal branches, except they represent commits from somebody else's repo. They can be checked out just like a local branch, but this puts you in a detached HEAD state (like checking out an old commit) because if you make a commit with a remote branch checked out, the branch won't update to the new commit since it always just points to the last known state of the remote repo
+
+	remote branches are prefixed by the remote they belong to
+
+git pull <remote>
+
+	Fetch the specified remote's copy of the current branch and immediately merge it into the local copy. Same as 'git fetch <remote>' followed by 'git merge origin/<current-branch>'
+
+git pull <branchname>
+
+	merge a different branch into your active branch
+
+git pull origin master
+
+	note: what actually happens with a git pull is that the remote branch gets fetched (updating the local copy of the remote branch) then that branch gets merged into the local one
+
+	or
+
+	'git pull origin master' = 'git fetch origin; git merge master origin/master;''
+	
+	also,
+	'git pull --rebase' = 'git fetch; git rebase;'
+
+	even 'git config --global branch.autosetuprebase always' is an option to always rebase when pulling. rebasing when pulling is like saying "I want to put my changes on top of what everybody else has done."
+
+	'git checkout master; git pull --rebase origin' simply moves your local changes onto the top of what everybody else has already contributed
+
+	Try and only make changes to origin/master via pull requests so that everyone can see the changes!
+	also, TODO: try and implement continuous integration with QFramework by running tests automatically!
+
+	also, more advanced:
+	with refspec known for fetch and push, pull is just the following:
+	
+		'git pull origin foo' = 'git fetch origin foo; git merge origin/foo'
+
+		and
+
+		'git pull origin bar~1:bugFix' = 'git fetch origin bar~1:bugFix; git merge bugFix'
+
+
+## Example workflow using fetch, rebase, and push
+
+git checkout master
+git fetch origin master
+git rebase -i origin/master
+# Squash commits, fix up commit messages etc.
+git push origin master
+
+	Since we already made sure the local master was up-to-date, this should result in a fast-forward merge, and git push should not complain about any of the non-fast-forward issues discussed above
+
+git merge branch2 branch3
+git merge --abort
+
+	note: git merge will also include the currently checked-out branch in the merged version. So if you have branch1 checked out, and you run git merge branch2 branch3, the merged version will combine branch1 as well as branch2 and branch3. That’s because the branch1 label will update after you make the merge commit, so it’s unlikely that you didn’t want the changes from branch1 included in the merge. For this reason, you should always checkout one of the two branches you’re planning on merging before doing the merge. Which one you should check out depends on which branch label you want to point to the new commit.
+
+	Note that all of the commands presented below merge into the current branch. The current branch will be updated to reflect the merge, but the target branch will be completely unaffected.
+
+	Since the checked-out branch is always included in the merge, you may have guessed that when you are merging two branches, you don't need to specify both of them as arguments to git merge on the command line. If you want to merge branch2 into branch1, you can simply git checkout branch1 and then type git merge branch2. The only reason to type git merge branch1 branch2 is if it helps you keep better mental track of which branches you are merging.
+
+	Also, since the two branches are merged, the order in which they are typed into the command line does not matter. The key is to remember that git merge always merges all the specified branches into the currently checked out branch, creating a new commit for that branch.
+
+git merge --no-ff <branch>
+
+	Merge the specified branch into the current branch, but always generate a merge commit (even if it was a fast-forward merge).
+	This is useful for documenting all merges that occur in your repository.
+
+## fast-forward merge ##
+
+	If the branch you are looking to merge some changes into can be traced as a direct descendant of the change commits, then this will result in a 'fast-forward' merge since the branch simply needs to be updated with these changes.
+
+## 3-way merge ##
+
+	uses a dedicated commit to tie together the two histories. The nomenclature comes from the fact that Git uses three commits to generate the merge commit: the two branch tips and their common ancestor.
+
+### conflicts ###
+
+	When you encounter a conflict while merging, running git status will show which files need to be resolved. Once resolved, simply add the file to the staging area and commit (resolving conflicts follows the familiar edit/stage/commit workflow).
+
+	One nice thing about resolving conflicts in git is that you can always back out of a merge that is going wrong with the command offered when running 'git status' while a merge is underway
+
+git config
+
+	Git stores configuration options in three separate files, which lets you scope options to infividual repositories, users, or the entire system:
+
+		<repo>/.git/config - Repository-specific settings
+		~/.gitconfig - User-specific settings. This is where options set with the --global flag are stored.
+		$(prefix)/etc/gitconfig - System-wide settings.
+
+	When options in these files conflict, local settings override user settings, which override system-wide.
+
+git config --list
+	To see that user name and email are set properly
+
+git config --global user.name "David Shope"
+git config --global user.email "your_email@example.com"
+git config --global core.editor "subl -n -w"
+
+*important!
+git config --global push.default upstream
+
+git config --global merge.conflictstyle diff3
+
+git config --global push.default simple
+	make some operations more straightforward
+
+git config --global http.postBuffer 209715200
+	work around an error when adding big files to git
+
+To create git aliases:
+	git config --global alias.co checkout
+
+	Now, in ~/.gitconfig,
+	[alias]
+		co = checkout
+
+	# Add some SVN-like aliases:
+	git config --global alias.st status
+	git config --global alias.br branch
+	git config --global alias.ci commit
+
+git credential-osxkeychain
+
+	note: use to see if osxkeychain is already installed. For Mac only!
+
+git config --global credential.helper osxkeychain
+
+	note: to tell git to use osxkeychain helper to remember your password when talking with GitHub
+
+# Enable tab completion in git
+source ~/git-completion.bash
+
+# Change command prompt
+source ~/git-prompt.sh
+export GIT_PS1_SHOWDIRTYSTATE=1
+# '\$(__git_ps1)' adds git-related stuff
+
+lightgrey="\[\033[0;37m\]"
+white="\[\033[1;37m\]"
+reset="\[\033[0m\]"
+export PS1="$lightgrey[\u@\h$white\$(__git_ps1) $lightgrey\W]\$ $reset"
+
+############################
+## ASG Git Tutorial Notes ##
+
+-git uses 160-bit (SHA-1) hashes to point to a given state of your repository
+-even if from different repositories, a given hash points to the same content
+
+-local repo is located under a folder named .git in your working copy
+
+-HEAD is a reference to the hash describing the current status
+
+-master is a branch (also a reference) that is canonically used to refer to the main branch (like the trunk in SVN)
+
+-kerberos works from lxplus
+
+Recipe for keeping your fork of the atlas offline repo up-to-date:
+git rebase upstream/master
+git status
+git push origin
+
+	Note: ideally you only need to fetch and use upstream/branch, but if you want to update your fork, you can use the above procedure, or in case you know you haven't done new development on your branch (but the upstream side has), you can run git merge upstream/master
+
+git rebase <base>
+
+	Rebase the current branch onto <base>
+
+	note: to replay your local changes on top of another hash and update the current branch pointer to that state
+	Primary reason to do this is to maintain a linear project history.
+	Rebasing is a common way to integrate upstream changes into your local repo.
+	Pulling in upstream changes with git merge results in a superfluous merge commit every time you want to see how the project has progressed. On the other hand, rebasing is like saying, “I want to base my changes on what everybody has already done.”
+
+	Like with git commit --ammend and git reset, you should never rebase commits that have been pushed to a public repo for the same reasons. The rebase would replace the old commits with new ones, and it would look like that part of your project history abruptly vanished.
+
+	If there is a conflict while rebasing, git will pause the rebase and ask you to resolve the conflict (resolve the conflict to continue:
+
+	git add <some-file>
+	git rebase --continue
+
+git rebase --abort
+
+	If all goes horribly wrong during rebase
+
+git rebase -i HEAD~4
+
+	Opens an interactive rebase window to rebase while choosing the order of commits and even whether to combine or remove commits
+
+	Can be used to "polish" a feature branch before merging it into the main code base (delete obsolete ones, squash insignificant commits, etc.) so that to everyone else, it will look like the entire feature was developed in a singe series of well-planned commits.
+
+About interacting with remote git repos:
+	local and remote branch references do not always match: e.g., if somebody committed to upstream/master and you run git fetch, your local master will differ from your upstream/master reference (before the fetch they would have been the same)
+
+	It is therefore important to use fetch often (there's no harm), and use references with the explicit remote if you intend to use that state (and not rely on whether you updated your local pointer or not)
+
+git reset
+
+	Reset the staging area to match the most recent commit, but leaves the working directory unchanged. Unstages all files without overwriting any changes, giving you the opportunity to rebuild the staged snapshot from scratch.
+
+git reset <file>
+
+	git reset used most frequently to undo changes in the staging area and the work directory.
+	Removes the specified file from the staging area, but leave the working directory unchanged. This unstages a file without overwriting any changes.
+	
+	In any use case, reset should only be used to undo local changes - you should never reset snapshots that have been shared with other developers. The ensuing merge commit required to synchronize your repository with the remote is likely to confuse and frustrate your team.
+
+git reset --soft
+	only the HEAD is reset
+
+git reset --hard
+	
+	Reset the staging area and the working directory to match the most recent commit. In addition to unstaging changes, the --hard flag tells Git to overwrite all changes in the working directory, too. Put another way: this obliterates all uncommitted changes, so make sure you really want to throw away your local developments before using it.
+
+git reset <commit>
+	Move the current branch tip backward to <commit>, reset the staging area to match, but leave the working directory alone. All changes made since <commit> will reside in the working directory, which lets you re-commit the project history using cleaner, more atomic snapshots.
+
+	provides a way of undoing a commit
+	
+	hash~N is a reference to the Nth ancestor of a hash (or reference)
+
+	Careful! When you undo with git reset (and the commits are no longer referenced by any refs or the reflog), there is no way to retrieve the original copy - it is a permanent undo. Care must be taken when using this tool, as it's one of the only Git commands that has the potential to lose your work.
+
+git reset --hard <commit>
+	also a valid combination
+
+git fetch origin
+git reset --hard origin/master
+	drop all local changes and commits, fetch the latest history from the server and point your local master branch at it
+
+git clean
+
+	removes untracked files from your working directory.
+	Often executed in conjunction with git reset --hard (since git reset doesn't operate on untracked files)
+
+git clean -n
+
+	perform a "dry run" of git clean. Shows you which files will be removed without actually removing them
+
+git clean -f
+
+	required unless the clean.requireForce configuration is set to false (true by default).
+	Will NOT remove untracked folders or files specified by .gitignore.
+
+git clean -f <path>
+
+	limit clean to specified path
+
+git clean -df
+
+	also remove untracked directories
+
+git clean -xf
+
+	also removes any files that Git usually ignores
+
+git stash
+	to interact with the stash, a place to temporarily save your changes away (cleaning up your working copy)
+	(Stashes both staged and unstaged changes)
+	This is an alternative to committing or checking out changes
+	Stashing is handy if you need to quickly switch context and work on something else, but you're mid-way through a code change and aren't quite ready to commit.
+	(won't stash changes made to untracked or ignored files)
+	-p option will iterate through each changed "hunk" in your working copy and ask whether you wish to stash it
+	(hit ? for a full list of hunk commands)
+git stash list
+	to list available stashes
+	By default, stashes are identified simply as a "WIP" - work in progress - on top of the branch and commit that you created the stash from
+git stash show
+	view a summary of a stash (-p or --patch to view full diff of a stash)
+git stash pop
+	to replay the changes in your stash on top of your HEAD (and delete the stash)
+	Note: you may have to resolve conflicts when you pop the stash if you've drifted too far away from the branch where the stash was saved
+	re-apply the most recent by default
+git stash pop stash@{2}
+	reapply changes made by stash@{2}
+git stash apply
+	to reapply the changes to your working copy and keep them in your stash (if you want to apply the same stashed changes to multiple branches)
+git stash branch branch_name stash@{1}
+	creates a new branch to apply your stashed changes to
+git stash -u (or --include-untracked)
+	tells git to also stash your untracked files
+git stash -a
+	includes changes to untracked AND ignored files
+git stash save "message"
+	annotate your stashes with a description to provide a bit more context
+git stash drop stash@{1}
+	delete a stash
+git stash clear
+	delete all of your stashes
+
+git grep "foo()"
+	Search the working directory for foo()
+
+git cherry-pick hash
+	to apply a commit on top of your current branch
+	Note: there is now a new commit hash corresponding to a new commit (different parent and different time) since the state is different (thus different hashes)
+
+######################
+## git commit notes ##
+http://chris.beams.io/posts/git-commit/
+
+.mailmap file
+
+A git commit message should always be able to complete the following sentence:
+If applied, this commit will ___
+
+The seven rules of a great git commit message
+	1. Separate subject from body with a blank line
+	2. Limit the subject line to 50 characters
+	3. Capitalize the subject line
+	4. Do not end the subject line with a period
+	5. Use the imperative mood in the subject line (makes commit messages look more like actions)
+	6. Wrap the body at 72 characters
+	7. Use the body to explain what and why vs. how
+
+############################################
+## Notes from ATLAS git workflow tutorial ##
+https://atlassoftwaredocs.web.cern.ch/gittutorial/
+
+Current shell environment setup:
+	ssh lxplus
+	setupATLAS
+	lsetup git
+	asetup AtlasExternals,21.0.9
+	source /afs/cern.ch/atlas/software/builds/nightlies/Athena-21.0.X-VAL/Athena/rel_1/InstallArea/x86_64-slc6-gcc49-opt/setup.sh
+
+	note: Athena-21.0.X-VAL doesn't currently exist!
+
+for CI of aogt8, must give atlasbot access as Developer to your project:
+	Project Settings -> Members
+
+.gitignore:
+	https://www.atlassian.com/git/tutorials/gitignore (for ignore patterns and rules)
+	# Ignore the most common extra files that can
+	# be produced while developing
+	*~
+	*.sw?
+	#*
+	.DS_Store
+	.pydevproject
+	.project
+	*.pyc
+git add -f
+	forces an ignored file to be staged (better though to simply define an ignore exception in .gitignore)
+git check-ignore -v
+	determine which pattern is causing a particular file to be ignored.
+	You can pass multiple file names to git check-ignore if you like, and the names themselves don't even have to correspond to files that exist in your repository.
+
+'lsetup git' is needed to set up a more recent version of git so that the push.default simple is recognized
+	Also, to get the git prompt info to work, lsetup git is needed as well!
+
+Full checkout: gives you access to working copies of all files. Very much the standard way of doing things
+
+Sparse checkout: gives you only the parts of the repository you want to update. ('git atlas' wrapper is provided to make this easier)
+	clones a copy of remote as a sparse checkout of the master branch (but you'll still have a complete copy of the repository inside the local repo .git)
+
+	https://atlassoftwaredocs.web.cern.ch/gittutorial/git-atlas/ for more info
+
+Sparse build:
+	After setting up AtlasExternals as a baseline athena release from the tutorial start, if you ran the normal cmake; make cycle you would rebuild the entire offline release.
+	This would take a long time and it's almost certainly not what you want. instead you only want to rebuild part of the release. alternatively,
+
+	mkdir ../build && cd ../build
+	cp ../aogt8/Projects/AthenaWorkDir/package_filters.txt .
+	EDITOR package_filters.txt
+	cmake -DATLAS_PACKAGE_FILTER_FILE=package_filters.txt ../aogt8/Projects/AthenaWorkDir
+	make -j
+
+	(maybe put package_filters.txt in a directory outside build so that you can rm -rf * your build area, just not in the git repo so thaty you don't commit it by mistake)
+
+Continuous Integration:
+	Historical software development in ATLAS with SVN and tag collector has a few shortcomings
+	-need to make a tag and collect it in release before you know if your changes actually work in the full release
+	-Nightly builds run on a fixed schedule which basically gives you one attempt per day and leads to a rather log feedback loop
+	-due to many parallel developments, dev branch is quite often unstable and this makes software development on it a very tedious adventure - but not how it should be!
+
+	switch to CI should improve this in several ways - CI is kind of an extension of the nightly system but instead of running build jobs at predefined times, jobs are created whenever a new merge request is opened
+
+	Every time a new merge request is opened to the main ATLAS Offline Software repository, a CI job is started which performs the following steps:
+	1. Checkout your changes and perform the merge locally on the build machine.
+	2. Run the cmake configuration step.
+	3. Run make to (re)-compile the whole release.
+	4. Run some (very) basic tests to ensure that your changes do not break things completely.
+
+	note: step 3 is not runnign a full build from scratch (as this would take about 4h for every merge request), but is re-using the build output from a previous build (so-called incremental builds). While in theory this should be safe and dependents of your changes should be re-compiled, this has never been tested inside ATLAS at such a scale. Therefore, be aware of this setup and report any suspicious behaviour you may observe.
+
+	ATLAS is using Jenkins as CI system and all jobs are run by the atlasbot user. Don't be surprised if you see comments from this guy on your merge request!
+
+Reviewing a Request:
+	Merge requests are the only way that code changes can propagate into the main ATLAS software repository - they should be reviewed! Reviewing code is a key feature of the new development process
+
+	Some roles during review, all should be discussing changes together:
+		-merge request shifter
+		-code author
+		-domain expert
+		-release coordinator
+
+Migrating from the SVN workflow
+	-In svn, there was one single repository that led to committing code here being the only general way to let others look at it or test it.
+	-In git, we use personal or group copies of the main repository (aka upstream repository) so there is an extra step here to take your own fork, but only needs to be done once
+
+	-In svn, you take a copy of the repository directly from the single svn master:
+		svn co $SVNOFF/Tools/PyJobTransforms/trunk Tools/PyJobTransforms
+	-In git, you instead clone the entire repository:
+		git clone https://:@gitlab.cern.ch:8443/YOUR_USER_NAME/athena.git
+		git remote add upstream https://:@gitlab.cern.ch:8443/atlas/athena.git
+			default checkout is also of all packages, but you can just use a sparse checkout if you don't want that
+			making a local copy of the repository does take up more space - about 200MB for a sparse checkout, 800MB for a complete one...but possible with branches and fetching updates to reuse it a lot
+
+	-a fully functioning local repository is more powerful for code developmet - you can save local snapshots of your code as a work in progress as often as you like (just git commit whenever) and trivially diff your code against any version in the repository.
+
+	-A branch in git is essentially equivalent to a set of package tags plus a Tag Collector bundle - however, it's hugely easier and faster to do
+
+	-In svn, to share your work you
+		svn commit
+	-In git, to share your work you
+		git add
+		git commit
+		git push -u origin
+		(although there are a few more steps, git gives you a lot more flexibility)
+
+	-In svn, updating to HEAD is pretty easy
+		svn update
+	-In git, the process is just to apply the changes from the upstream branch into your topic branch:
+		git fetch upstream
+		git merge upstream/[PARENT_BRANCH]
+
+	-git has much more powerful facilities for rolling back out of a failed merge
+
+	-In svn, tagging looks like
+		svn cp -r 123456 $SVNOFF/Tools/PyJobTransforms/trunk $SVNOFF/Tools/PyJobTransforms/tags/PyJobTransforms-01-02-03
+	-In git, this becomes...nothing at all! The change is already identified uniquely in git by the commits made in the development and by the topic branch that was used
+		(although 'git tag' still exists if you'd like for easy reference to a commit)
+		Remember that tags in git are very light weight compared to svn! Every developer should employ them to keep various checkpoints of their work handy
+
+	-In svn, to request a package tag be included in release, you would have to either use the Tag Collector or send and email to release coordinators
+	-In git, this is done from GitLab by just clicking on the merge request button
+
+	-In svn, each package had a tag
+	-In git, tags exist but refer to a snapshot of the state of the entire repository - this is a good thing, however, because it's trivial to look at the code differences between releases without needing to go via Tag Collector
+		git diff release/21.0.1..release/21.0.8
+
+	Possible questions:
+		Where did the trunk / tags directories go?
+
+	Benefits I see:
+		tags can be given meaningful names (no more HWWlvlv2015-00-00-0X)
+
+##################################
+## Notes from learngitbranching ##
+http://learngitbranching.js.org/
+
+Branches are extremely lightweight in git - they are just pointers to a specific commit, nothing more! When you create a new branch, all git needs to do is create a new pointer - it doesn't create a whole new set of folders or files
+(no storage, memory overhead)
+	hence the mantra "branch early, branch often"
+
+HEAD is just a symbolic name that stands for the commit that is currently checked out
+
+^ means "parent of"
+~N means "Nth ancestor of"
+
+HEAD^2  = second parent of (second direct ancestor - can happen via merge commit)
+HEAD~10 = 10th commit before HEAD
+
+master^ is the parent of master
+master^^ is the grandparent of master
+	Travel back in time with HEAD^!
+
+	an argument after ^ will specify which parent commit to trace back to (e.g. simple merge commits have 2 parents, so git checkout HEAD^2 would checkout the commit that just got merged)
+
+	you can even chain ~ and ^ together: starting at C7, 'git checkout HEAD~^2~2'would take you to c1 in the following diagram:
+
+	C0		C1
+	|		|
+	|		|
+	C2 		C3
+	|		|
+	|		|
+	C4		C5
+	|     /
+	|   /
+	C6
+	|
+	|
+	C7 *
+
+
+git revert
+	allows you to reverse changes made by a commit but share it with others in a safe way by creating a new commit with the reverse applied. (git reset accomplishes this similarly, but rewrites history)
+
+	Also, git reset can only work backwards from the current commit - e.g. if you wanted to undo an old commit with git reset, you would have to remove all commits that occurred after the target commit, remove it, then re-commit all of the subsequent commits. git revert is able to target an individual commit at an arbitrary point in the history.
+
+git tag tagName Hash
+
+	Branches are easily mutated, often temporary, and always changing. Tags are meant to be more permanent than branches and are a way of marking certain commits from e.g. major releases and big merges. You can't "check out" a tag and then complete work on that tag -- tags exist as anchors in the commit tree that designate certain spots.
+
+git tag -d <tagname>
+git push origin :refs/tags/<tagname>
+	remove a tag <tagname> from your local repository
+
+
+git describe Hash
+
+	provides how far in history the most recent tag is located.
+	Output takes the form Tag_n_Hash
+
+Social coding:
+	-remote branches keep track of the state of remote repositories (since last update)
+	-remote branches have a naming convention: <remote name> / <branch name>
+	-if you checkout a remote branch and make a commit, the remote branch won't update to the new commit: this is because it only updates when the remote (repo) updates
+
+
+
+
+
+
+##################################
+## atlassian git tutorial notes ##
+##################################
+https://www.atlassian.com/git/tutorials
+
+############## Learn Git
+
+### Learn Git With Bitbucket Cloud ###
+
+Each repo on bitbucket has a 2 GB size limit, but recommended not to exceed 1 GB (atlasoff is ~700 MB)
+
+### Learn About Code Review In Bitbucket Cloud ###
+
+############## Beginner
+
+### What Is Version Control ###
+
+### What Is Git ###
+
+All objects in a git repo are are secured with a cryptographically secure hashing algorithm called SHA1 (protects against both accidental and malicious change and ensures that the history is fully traceable). If it was ever corrupted, the commit would generate a different ID.
+
+### Why Git For Your Organization ###
+
+### Install Git ###
+
+############## Getting Started
+
+### Setting Up A Repository ###
+
+Unlike SVN, Git doesn't require a .git folder in every subdirectory
+
+### Saving Changes ###
+
+### Inspecting A Repository ###
+
+### Undoing Changes ###c
+
+### Rewriting History ###
+
+The git reflog
+
+	Git keeps track of updates to the tip of branches using a mechanism called reflog. This allows you to go back to changesets even though they are not referenced by any branch or tag.
+
+git reflog
+
+	show the reflog for the local repository. Every time the current HEAD gets updated (by switching branches, pulling in new changes, rewriting history or simply by adding new commits) a new entry will be added to the reflog. 
+
+git reflog --relative-date
+
+	show the reflog with relative date information (e.g. 2 weeks ago).
+
+############## Collaborating
+
+### Syncing ###
+
+### Making A Pull (merge) Request ###
+https://www.atlassian.com/git/tutorials/making-a-pull-request
+
+request that a local branch be merged into a branch on a remote
+
+Works with a Feature Branch Workflow, Gitflow Workflow, or the Forking Workflow (but not the Centralized Workflow, because either two distinct branches or two distinct repositories are required)
+
+-provides notification to developers, but also a forum to discuss changes. Feedback on code in question and even pushing of follow-up commits is all tracked in the pull request
+
+### Using Branches ###
+
+Git branches aren't like SVN branches. Whereas SVN branches are only used to capture the occasional large-scale development effort, Git branches are an integral part of your everyday workflow!
+
+Git stores a branch as a reference to a commit. In this sense, a branch represents the tip of a series of commits - it's not a container for commits
+
+Use any time you want an independent line of development - this also keeps the main master branch free from questionable code
+
+New commits are recorded in the history for the current branch, which results in a divergence in the history of the project
+
+Detached HEAD state:
+HEAD refers to the currently checked out commit. git checkout simply updates the HEAD to point to either the specified branch or commit. When it points to a branch, Git doesn't complain, but when you check out a commit, it switches into a "detached HEAD" state.
+This is a warning telling you that everything you're doing is "detached" from the rest of your project's development. If you were to start developing a feature while in a detached HEAD state, there would be no branch allowing you to get back to it. When you inevitably check out another branch (e.g., to merge your feature in), there would be no way to reference your feature!
+
+### Comparing workflows ###
+
+
+# Centralized Workflow
+
+-You don't have to change the existing svn workflow to take advantage of git
+-However, each developer still gets their own local copy of the entire project
+-Have access now to Git's robust branching and merging model (branches are designed to be a fail-safe mechanism for integrating code and sharing changes btw. repos)
+-Use a central repo to serve as the single point-of-entry for all changes to the project
+-Instead of trunk, default development branch is called master and all changes are committed to this branch (doesn't require any other branches besides master)
+
+-start by cloning central repository
+-in local copy of project, edit files and commit changes as you would with SVN (but these new commits are stored locally!)
+-synchronize upstram only when convenient
+
+-to publish changes, developers "push" their local master branch to the central repo (equivalent of svn commit, except that it adds all local commits that aren't already in central master branch)
+-If a developer's local commits diverge from the central repo, Git will refuse to push changes because this would overwrite official commits.
+-Developer must first fetch the updated central commits and rebase their changes on top of them ("I want to add my changes to what everyone else has already done")
+-result is a perfectly linear history, just like in traditional SVN workflows
+
+- use 'git pull --rebase origin master' before you publish your work under this workflow to not end up with superfluous merge commits
+
+-possible to recreate an svn workflow with only a handful of git commands, but doesn't utilize full capabilities of git
+
+
+# Feature Branch Workflow
+
+-great for teams comfortable with the centralized workflow but wanting to streamline collaboration efforts
+
+-core idea is that all feature development should take place in a dedicated branch instead of the master branch
+-this encaplsulation makes it easy for multiple developers to work on a particular feature without disturbing the main codebase
+-master branch will never contain broken code, huge advantage for continuous integration environments
+-makes it possible to leverage pull requests, great way to initiate discussion around a branch
+-others can sign off on a feature before it gets integrated into the official project
+-can initiate pull request even when you get stuck to get help from others
+
+-make branches descriptive!!
+
+-still use central repo and master still represents official project history
+-but instead of committing directly on their local master branch, developers create a new branch every time they start work on a new feature
+-feature branches should have descriptive names, like add-menu or issue-#1061
+-git makes no technical distinction between master and feature branches (still edit/stage/commit)
+
+-feature branches should be pushed to the central repository, making it possible to share a feature with other developers without touching any official code. 
+
+-make it possible to discuss changes via pull requests (asking to merge the addition into master) so others can review
+-can initiate discussion at any point along the way, even for just sharing a screenshot for instance!
+-Merge Request comments are written in Markdown, so you can embed images and emoji, use pre-formatted text blocks, and other lightweight formatting
+-Merge Requests remain as a record of historical changes - they're searchable, so they let anyone go back in time to understand why and how a decision was made
+-can even be used much earlier in the development process (to get help with a feature, just file a pull request!)
+-by incorporating certain keyworkds into the text of your merge request, you can associate issues with code. When the pull request is merged, the related issues are also closed
+
+-once accepted, publishing a feature is much like as in the Centralized Workflow (sync with upstream/master, merge changes, and push result)
+
+
+# Gitflow Workflow
+nvie.com
+
+-Sometimes, the Feature Branch Workflow is a bit TOO flexibe for developing a project
+-for larger teams, it might make sense to develop a project by assigning more specific roles to different branches
+-good for managing feature development, release preparation, and maintenance
+
+-define a strict branching model designed around the project release (great for managing larger projects)
+-no new concepts or commands beyond what's required for the Feature Branch Workflow
+
+-In addition to feature branches, it uses individual branches for preparing, maintaining, and recording releases.
+-Can also leverage all of the benefits of the Feature Branch Workflow
+
+-Still use a central repo as the communication hub for all developers
+-Also, developers work locally and push branches to central repo
+-only difference is the branch structure of project
+
+-Historical Branches:
+	Instead of a single master branch, use two branches to record history of the project. Master branch stores official release history, and develop branch serves as an integration branch for features. Also convenient to tag all commits in the master branch with a version number. Rest of workflow revolves around distinction between master and develop branches
+
+-Feature branches:
+	Each new feature should reside in its own branch, which can be pushed to the central repo for backup/collaboration. Instead of branching off of master, feature branches use develop as their parent branch. When a feature is complete, it gets merged back into develop. Features never interact directly with master. For all intents and purposes, the develop branch is the Feature Branch Workflow.
+
+-Release branches:
+	When develop has acquired enough features for a release (or a predetermined release date is approaching), you fork a release branch off of develop. Creating this branch starts the next release cycle, so no new features can be added after this point - only bug fixes, documentation generation, and other release-oriented tasks should go in this branch. Once ready to ship, the release gets merged into master and tagged with a version number. At this point, it should be merged back into develop, which may have progressed since the release was initiated. Like a feature branch, but dedicated to polishing a release.
+
+-Maintenance/Hotfix branches:
+	Used to quickly patch production releases. Only branch that should fork directly off of master. As soon as the fix is complete, it should be merged into both master and develop (or current release branch), and master should be tagged with an updated version number.
+	-lets you address issues without interrupting the rest of the workflow or waiting for next release cycle.
+	-"Ad hoc" release branch that works directly with master.
+
+-develop branch contains complete history of project, whereas master contains an abridged version.
+
+	# Hooks:
+	Scripts that execute whenever a particular event occurs within a repository, git comes with several
+	e.g. possible to configure a hook to automatically build a public release whenever you push the master branch to the central repo or push a tag.
+
+
+# Forking Workflow
+
+-fundamentally different than other workflows
+-instead of using a single server-side repo to act as a "central" codebase, every developer is given a server-side repository
+-each user has two repos (local and public)
+-contributions can be integrated without the need for everybody to push to a single central repository
+-Developers push to their own server-side repositories, and only the project maintainer can push to the official repository
+-allows maintainer to accept commits from any developer without giving them write access to the official codebase.
+-Ideal workflow for open source projects (even untrusted third-parties can contribute safely)
+
+-each developer names their server-side repo "origin" by convention (done automatically when cloned)
+-"upstream" used for the official repository
+
+-a bit of a paradigm shift from an svn workflow
+
+# GitHub Flow workflow
+http://scottchacon.com/2011/08/31/github-flow.html
+
+-Gitflow workflow is just very complicated - too much so for many dev teams
+-GitHub Flow is much simpler
+-GitHub doesn't really have "releases" which gitflow is designed around, sometimes deploying production even multiple times a day
+-deploying so often means that it's impossible to introduce large numbers of big bugs. Little issues can be introduced, but can then be fixed and redeployed quickly
+-no distinction between a hotfix and a very small feature.
+
+-anything in the master branch is deployable
+-to work on something new, create a descriptively named branch off master
+-commit to branch locally and regularly push your work to the same named branch on the server
+-when you need feedback or help, or you think the branch is ready for merging, open a pull request
+-After someone else has reviewed and signed off on the feature, you can merge it into master
+-Once it is merged and pushed to 'master', you can and should deploy immediately
+
+-wait, this is just the feature branch workflow... :)
+
+-if you push someting to master that is not tested or breaks the build, you break the social contract of the development team and you normally feel pretty bad about it.
+
+# GitLab Flow workflow
+
+Since many organizations new to git have no conventions how to work with it, it can quickly become a mess. The biggest problem they run into is that many long running branches that each contain part of the changes are around
+
+Git flow was one of the first proposals to use git branches and it has gotten a lot of attention. The first problem with it is that developers must use the develop branch and not master, master is reserved for code that is released to production. It is a convention to call your default branch master and to mostly branch from and merge to this. Since most tools automatically make the master branch the default one and display that one by default it is annoying to have to switch to another one. The second problem of git flow is the complexity introduced by the hotfix and release branches (overkill for the vast majority of groups). Most organizations today practice continuous delivery (default branch can be deployed).
+
+GitHub flow tried to simplify this - merging everything into the master branch and deploying often means you minimize the amount of code in 'inventory' which is in line with the lean and continuous delivery best practices. However, this flow still leaves a lot of questions unanswered regarding deployments, environments, releases and integrations with issues. GitLab flow offers additional guidance here.
+
+
+
+############## Migrating to Git
+
+### SVN to Git - prepping for the migration ###
+
+Remember, Git is not SVN!
+
+Git once had a bad reputation for a steep learning curve, but Git maintainers have been steadily releasing new improvements like sensible defaults and contextual help messages
+
+For a list of basic git commands
+https://www.atlassian.com/git/tutorials/svn-to-git-prepping-your-team-migration
+
+
+* Don't be scared of Branching or Merging
+
+	In SVN, you commit code by editing files in your working copy, then running svn commit to send the code to the central repository. Everybody else can then pull those changes into their own working copies with svn update. SVN branches are usually reserved for large, long-running aspects of a project because merging is a dangerous procedure that has the potential to break the project.
+
+	Git’s basic development workflow is much different. Instead of being bound to a single line of development (e.g., trunk/), life revolves around branching and merging.
+
+	When you want to start working on anything in Git, you create and check out a new branch with git checkout -b <branch-name>. This gives you a dedicated line of development where you can write code without worrying about affecting anyone else on your team. If you break something beyond repair, you simply throw the branch away with git branch -d <branch-name>. If you build something useful, you file a pull request asking to merge it into the master branch.
+
+-summary of workflows listed here
+
+### Migrate to Git from SVN ###
+
+1. Prepare your environment for the migration.
+2. Convert the SVN repository to a local Git repository.
+3. Synchronize the local Git repository when the SVN repository changes.
+4. Share the Git repository with your developers via GitLab.
+5. Migrate your development efforts from SVN to Git.
+
+### 1. Prepare ###
+
+
+
+############## Advanced Tips
+
+### Advanced Git Tutorials ###
+
+-A ref is Git's internal way of referring to a commit (some types of refs include commit hashes and branch names, but there are many others)
+
+### Merging vs. Rebasing ###
+
+-Merging and rebasing offer alternative ways to integrate commits from different branches and each has its own advantage
+-git rebase command has a reputation for being magical Git voodoo that beginners whould stay away from, but it can actually make life much easier for a dev team when used with care.
+
+Conceptual Overview:
+	git rebase solves the same problem as git merge - to integrate changes from one branch into another branch - they just do it in very different ways
+
+	Imagine you start working on a new feature in a dedicated branch and then another team member updates the master branch with new commits, which results in a forked history. Let's say that the new commits in master are relevant to the feature that you're working on. to incorporate the new commits into your feature branch, you have two options: merging or rebasing.
+
+	Merging is nice because it's a non-destructive operation. However, it results in an extraneous merge commit every time you need to incorporate upstream changes. If master is very active and you would like to merge it constantly into your feature branch, then this can pollute your feature branch's history quite a bit. While it's possible to mitigate this issue with advanced git log options, it can make it hard for other developers to understand the history of the project.
+
+	As an alternative to merging, rebasing the feature branch onto master effectively incorporates all of the new commits in master into the feature branch since the feature branch now begins on the tip of the master branch. However, in order to accomplish this, rebasing re-writes the project history by creating brand new commits for each commit in the original branch. The benefit is a much cleaner project history.
+
+	2 trade-offs for this pristine commit history: safety and traceability.
+	-Without following the golden rule of rebasing, re-writing project history can be potentially catastrophic for your collaboration workflow.
+	-Less important, rebasing loses the context provided by a merge commit - you can't see when upstream changes were incorporated into a feature.
+
+The Golden Rule of Rebasing:
+	Once you understand what rebasing is, the most important thing to learn is when not to do it. The golden rule of git rebase is:
+
+		never use it on public branches
+
+	e.g. rebasing master onto your feature branch - since rebasing results in brand new commits, git will think that your master branch's history has diverged from everybody else's
+	The only way to synchronize the two master branches is to merge them back together, resulting in an extra merge commit and two sets of commits that contain the same changes (the original ones, and the ones from your rebased branch). Needless to say, this is a very confusing situation.
+
+	If you try to push the rebased master branch back to a remote repository, Git will prevent you from doing so because it conflicts with the remote master branch. But, you can force the push to go through by passing the --force flag, which overwrites the remote master branch to match the rebased one from your repository and makes things very confusing for others on your team.
+
+One of the best ways to incorporate rebasing into your workflow is to clean up local, in-progress features. By periodically performing an interactive rebase, you can make sure each commit in your feature is focused and meaningful. This lets you write your code without worrying about breaking it up into isolated commits - you can fix that up after the fact.
+
+git checkout feature
+git rebase -i HEAD~3
+	By specifying HEAD~3 as the new base, you're not actually moving the branch - you're just interactively re-writing the 3 commits that follow it.
+
+If you want to re-write the entire feature using this method, the git merge-base command can be useful to find the original base of the feature branch (returns the commit ID of the original base, which you can then pass to git rebase)
+	git merge-base feature master
+
+This way, the only thing other developers will see is your finished product, which should be a clean, easy-to-follow feature branch history.
+When using pull requests, clean up your code with an interactive rebase BEFORE submitting your pull request - at this point, it becomes a public branch and others will be looking at it.
+
+### Reset, Checkout, and Revert ###
+
+git reset, git checkout, and git revert commands are all similar in that they undo some type of change in your repository but they all affect different combinations of the working directory, staged snapshot, and commit history
+
+Commit-level Operations
+	The parameters that you pass to git reset and git checkout determine their scope. When you DON'T include a file path as a parameter, they operate on whole commits. (note that git revert doesn't have a file-level counterpart)
+
+	Reset:
+		On commit-level, resetting is a way to move the tip of a branch to a different commit, which can be used to remove commits from the current branch.
+		e.g. to move the hotfix branch backwards by two commits,
+			git checkout hitfix
+			git reset HEAD~2
+		The two commits that were on the end of hotfix are now dangling commits, which means they will be deleted the next time Git performs a garbage collection (basically, you're saying that you want to throw away these commits)
+
+		In addition to moving the current branch, you can also get git reset to alter the staged snapshot and/or the working directory by passing it one of the following flags:
+			--soft  - The staged snapshot and working directory are not altered in any way
+			--mixed - The staged snapshot is updated to match the specified commit, but the working directory is not affected. This is the default option.
+			--hard  - The staged snapshot and the working directory are both updated to match the specified commit.
+		(often used with HEAD as the parameter)
+		Be careful when passing a commit other than HEAD (e.g. HEAD~2) to git reset, since this re-writes the current branch's history.
+
+	Checkout:
+		When passed a branch name, it lets you switch between branches. Internally, all the above command does is move HEAD to a different branch and update the working directory to match. Since this has the potential to overwrite local changes, Git forces you to commit or stash any changes in the working directory that will be lost during the checkout operation. Unlike git reset, git checkout doesn't move any branches around.
+
+		You can also check out arbitrary commits by passing in the commit reference instead of a branch. This does the exact same thing as checking out a branch: it moves the HEAD reference to the specified commit. This is useful for quickly inspecting an old version of your project. However, since there is no branch referenced to the current HEAD, this puts you in a detached HEAD state. This can be dangerous if you start adding new commits because there will be no way to get back to them after you switch to another branch. For this reason, you should alwasy create a new branch before adding commits to a detached HEAD.
+
+	Revert:
+		Reverting undoes a commit by creating a NEW commit. This is a safe way to undo changes, as it has no chance of re-writing the commit history.
+		e.g. to make a new commit which undoes the previous two,
+			git checkout hotfix
+			git revert HEAD~2
+
+		git revert should be used to undo changes on a public branch, while git reset should be reserved for undoing changes on a private branch.
+
+		You can also think of git revert as a tool for undoing committed changes, while git reset HEAD is for undoing uncommitted changes.
+
+		Like git checkout, git revert has the potential to overwrite files in the working directory, so it will ask you to commit or stash changes that would be lost during the revert operation.
+
+File-level Operations
+	git reset and git checkout commands also accept an optional file path as a parameter. This dramatically alters their behavior. Instead of operating on entire snapshots, this forces them to limit their operations to a single file.
+
+	Reset:
+		In this case, git reset updates the staged snapshot to match the version from the specified commit.
+		e.g. to fetch the version of foo.py in the 2nd-to-last commit and stage it for the next commit:
+			git reset HEAD~2 foo.py
+
+		As with the commit-level version of git reset, this is more commonly used with HEAD rather than an arbitrary commit. Running git reset HEAD foo.py will unstage foo.py. The changes it contains will still be present in the working directory.
+
+		note: the --soft, --mixed, and --hard flags do not have any effect on the file-level version of git reset, as the staged snapshot is always updated, and the working directory is never updated.
+
+	Checkout:
+		Checking out a file is similar to using git reset with a file path, except it updates the working directory instead of the stage. Unlike the commit-level version of this command, this does not move the HEAD reference, which means that you won't switch branches.
+		e.g. to make foo.py in the working directory match the one from the 2nd-to-last commit:
+			git checkout HEAD~2 foo.py
+
+		Just like the commit-level invocation of git checkout, this can be used to inspect old versions of a project - but the scope is limited to the specified file.
+
+		note that this removes all of the subsequent changes to the file, whereas the git revert command undoes only the changes introduced by the specified commit.
+
+		e.g. git checkout HEAD foo.py has the effect of discarding unstaged changes to foo.py (similar behavior to git reset HEAD --hard, but it operates only on the specified file)
+
+
+Summary:
+
+	Command 		Scope 			Common use cases
+
+	git reset 		Commit-level 	Discard commits in a private branch or throw away uncommited changes
+	git reset 		File-level 		Unstage a file
+	git checkout 	Commit-level 	Switch between branches or inspect old snapshots
+	git checkout 	File-level 		Discard changes in the working directory
+	git revert 		Commit-level 	Undo commits in a public branch
+	git revert 		File-level 		(N/A)
+
+### Advanced Git Log ###
+
+git log makes your project history useful. There are many advanced commands, however, with git log.
+They can be split into two categories: formatting how each commit is displayed, and filtering which commits are included in the output.
+
+	Formatting Log Output:
+		Most of these come in the form of flags that let you request more or less information from git log. you can use git config's aliasing functionality to create a shortcut for any of the formatting options discussed below.
+
+		Oneline
+
+			The --oneline flag condenses each commit to a single line. By default, it displays only the commit ID and the first line of the commit message. Output looks something like
+
+				0e25143 Merge branch 'feature'
+				ad8621a Fix a bug in the feature
+				16b36c6 Add a new feature
+				23ad9ad Add the initial code base
+
+			This is very useful for getting a high-level overview of your project.
+
+		Decorating
+
+			Many times it's useful to know which branch or tag each commit is associated with. The --decorate flag makes git log display all of the references (e.g. branches,tags, etc) that point to each commit. Can be combined with other config options, e.g. with 'git log --oneline --decorate' you will get commit history like:
+
+				0e25143 (HEAD, master) Merge branch 'feature'
+				ad8621a (feature) Fix a bug in the feature
+				16b36c6 Add a new feature
+				23ad9ad (tag: v0.9) Add the initial code base
+
+			Gives a more complete view of the logical structure of your repository.
+
+		Diffs
+
+			The git log command includes many options for displaying diffs with each commit. Two of the most common options are --stat and -p.
+
+			The --stat option displays the number of insertions and deletions to each file altered by each commit (modifying a line is represented as 1 insertion and 1 deletion). This is useful when you want a brief summary of the changes introduced by each commit. The amount of + and - signs next to the file name show the relative number of changes to each file altered by the commit.
+
+			To see the actual changes introduced by each commit, you can pass the -p option to git log. This outputs the entire patch representing that commit, but if you are wanting to see the full diff, you probably also want to use the pickaxe option (see below)
+
+		The Shortlog
+
+			The git shortlog command is a special version of git log intended for creating release announcements. It groups each commit by author and displays the first line of each commit message. This is an easy way to see who's been working on what. By default, git shortlog sorts the output by author name, but you can also pass the -n option to sort by the number of commits per author.
+
+		Graphs
+
+			the --graph option draws an ASCII graph representing the branch structure of the commit history. This is commonly used in conjunction with the --oneline and --decorate commands to make it easier to see which commit belongs to which branch:
+
+				git log --graph --oneline --decorate
+
+				* 0e25143 (HEAD, master) Merge branch 'feature'
+				|\
+				| * 16b36c6 Fix a bug in the new feature
+				| * 23ad9ad Start a new feature
+				* | ad8621a Fix a critical security issue
+				|/
+				* 400e4b7 Fix typos in the documentation
+				* 160e224 Add the initial code base
+
+			Although this is nice for smaller repositories, you're probably better off with a more full-featured visualization tool like gitk or SourceTree for projects that are heavily branched.
+
+		Custom Formatting
+
+			For all of your other git log formatting needs, you can use the --pretty=formal:"<string>" option. This lets you display each commit however you want using printf-style placeholders.
+
+			e.g.
+			%cn, %h and %cd characters in the following command are replaced with the committer name, abbreviated commit hash, and the committer date, respectively.
+
+				git log --pretty=format:"cn committed %h on %cd"
+
+				John committed 400e4b7 on Fri Jun 24 12:30:04 2014 -0500
+				John committed 89ab2cf on Thu Jun 23 17:09:42 2014 -0500
+				Mary committed 180e223 on Wed Jun 22 17:21:19 2014 -0500
+				John committed f12ca28 on Wed Jun 22 13:50:31 2014 -0500
+
+			complete list of placeholders can be found at https://www.kernel.org/pub/software/scm/git/docs/git-log.html#_pretty_formats
+
+			the --pretty=format:"<string>" option is particularly useful when you're trying to pipe git log output into another command.
+
+	Filtering the Commit History
+
+		Listed below are some of the ways to navigate the commit history and pick out specific commits in your project using git log. All of these can be combined with any of the formatting options discussed above.
+
+		By Amount
+
+			The most basic filtering option for git log is to limit the number of commits that are displayed. You can limit git log's output by including the -<n> option. For example, the following command will display only the 3 most recent commits.
+
+				git log -3
+
+		By Date
+
+			To find a commit from a specific time frame, you can use the --after or --before flags for filtering commits by date, each of which accept a variety of date formats as a parameter.
+
+			e.g.
+			to show only commits that were created after July 1st, 2014 (inclusive)
+
+				git log --after="2014-7-1"
+
+			You can also pass relative references like "1 week ago" and "yesterday"
+
+				git log --after="yesterday"
+
+			To search for commits that were created between two dates,
+
+				git log --after="2014-7-1" --before="2014-7-4"
+
+			note that the --since and --until flags are synonymous with --after and --before, respectively
+
+		By Author
+
+			--author flag accepts a regular expression, and returns all commits whose author matches that pattern - doesn't need to be an exact match, just contain it
+
+				git log --author="John"
+
+			Use regular expressions to create more complex searches - to search for commits by either Mary or John,
+
+				git log --author="John||Mary"
+
+			Note that the author's email is also included with the author's name, so you can use this option to search by email, too.
+
+		By Message
+
+			The --grep flag allows searches by commit message. Works just like with author, but matches against commit message instead.
+
+				git log --grep="JRA-224:"
+
+			pass the -i parameter to git log to make it ignore case differences while pattern matching.
+
+		By File
+
+			git log -- foo.py bar.py
+
+			The -- parameter is used to tell git log that subsequent arguments are file paths and not branch names. If there's no chance of mixing it up with a branch, you can omit the --
+
+		By Content
+
+			To search for commits that introduce or remove a particular line of source code. This is called a pickaxe, and it takes the form of -S"<string>".
+			For example, if you want to know when the string "Hello, World!" was added to any file in the project, you would use the following command:
+
+				git log -S"Hello, World!"
+
+			If you want to search using a regular expression instead of a string, you can use the -G"<regex>" flag instead. This is a very powerful debugging tool, as it lets you locate all of the commits that affect a particluar line of code. It can even show you when a line was copied or moved to another file.
+
+		By Range
+
+			You can pass a range of commits to git log to show only the commits contained in that range. The range is specified in the following format, where <since> and <until> are commit references:
+
+				git log <since>..<until>
+
+				git log master..feature (shows how far feature has progressed since it forked off of master)
+				git log feature..master (shows all of the commits in master since feature forked off)
+
+		Filtering Merge Commits
+
+			If you have tons of merge commits in your history, you can filter them out with the --no-merges flag:
+
+				git log --no-merges
+
+			If for some reason you are actually only interested in merge commits, this returns all commits which have at least two parents:
+
+				git log --merges
+
+### Git Hooks ###
+
+You can perform custom actions when a certain event takes place in a Git repository with hooks. From normalizing commit messages, automating test suites, notifying continuous integration systems and much more to streamline your workflow. Git Hooks are scripts that perform these tasks. They let you customize Git's internal behavior and trigger customizable actions at key points in the development life cycle.
+
+Common use cases:
+-encouraging a commit policy
+-altering the project environment depending on the state of the repository
+-implementing continuous integration workflows
+
+but since scripts are infinitely customizable, you can use Git hooks to automate or optimize virtually any aspect of your development workflow!
+
+Conceptual overview:
+
+	All Git hooks are ordinary scripts that Git executes when certain events occur in the repository. This makes them very easy to install and configure.
+	Hooks can reside in either local or server-side repositories, and they are only executed in response to actions in that repository.
+
+	The following configuration apply to both local and server-side hooks:
+
+	Installing Hooks
+		Hooks reside in the .git/hooks directory of every Git repository. Git automatically populates this directory with example scripts when you initialize a repository. If you take a look inside .git/hooks, you'll find the following files:
+
+			applypatch-msg.sample pre-push.sample
+			commit-msg.sample pre-rebase.sample
+			post-update.sample prepare-commit-msg.sample
+			pre-applypatch.sample update.sample
+			pre-commit.sample
+
+		These represent most of the available hooks, but the .sample extension prevents them from executing by default. To "install" a hook, just remove the .sample extension (or add a new file matching one of the above filenames, minus the .sample extension).
+
+		Example:
+
+			to install a simple prepare-commit-msg hook, remove the .sample extension from this script and add the following to the file ($1 accesses the first argument passed to the script:
+
+				#!/bin/sh
+
+				echo "# Please include a useful commit message!" > $1
+
+			Hooks need to be executable, so you may need to change the file permissions of the script if you're creating it from scratch (chmod +x prepare-commit-msg). You should now see this message in place of the default commit message every time you run git commit - so cool!
+
+	Scripting Languages
+		The built-in scripts are mostly shell and PERL scripts, but you can use any scripting language you like as long as it can be run as an executable. The shebang line (#!/bin/sh) in each script defines how your file should be interpreted. So, to use a different language, all you have to do is change it to the path of your interpreter.
+
+		e.g. the following hook will do the same thing as the shell script in the previous section, but in python (sys.argv[1] gives us the first argument passed to the script in this case):
+
+				#!/usr/bin/env python
+
+				import sys, os
+
+				commit_msg_filepath = sys.argv[1]
+				with open(commit_msg_filepath, 'w') as f:
+				 f.write("# Please include a useful commit message!")
+
+		You can work in whatever language you're most comfortable with!
+
+	Scope of Hooks
+		Hooks are local to any given Git repository, and are NOT copied over to the new repository when you run git clone. And, since hooks are local, they can be altered by anybody with access to the repository.
+
+		Two consequences - Need to find a way to make sure hooks stay up-to-date amongst your team members. Second, you can't force developers to create commits that look a certain way - you can only encourage them to do so. Simple solution to both problems is to store your hooks in the actual project directory (above the .git directory), which lets you edit them like any other version-controlled file. To install the hook, you can either create a symlink to it in .git/hooks, or you can simply copy and paste it into the .git/hooks directory whenever the hook is updated.
+
+		Git also provides a Template Directory mechanism that makes it easier to install hooks automatically. All files and directories contained in this template directory are copied into the .git directory every time you use git init or git clone.
+
+		All of the local hooks below can be altered (or completely un-installed) by the owner of a repository. It's entirely up to each team member whether or not they actually use a hook. With this in mind, it's best to think of Git hooks as a convenient developer tool rather than a strictly enforced dev policy (although it is possible to reject commits that do not conform to some standard using server-side hooks)
+
+	Local Hooks
+		Only affect the repository in which they reside. Remember each developer can alter their own local hooks, so you can't use them as a way to enforce a commit policy. They can, however, make it much easier for developers to adhere to certain guidelines.
+
+		Here we explore 6 of the most useful local hooks:
+		-pre-commit
+		-prepare-commit-msg
+		-commit-msg
+		-post-commit
+		-post-checkout
+		-pre-rebase
+
+		The first 4 hooks let you plug into the entire commit life cycle, and the final 2 let you perform some extra actions or safety checks for the git checkout and git rebase commands, respectively.
+		All pre- hooks let you alter the action that's about to take place, while the post- hooks are used only for notifications. We'll also see some useful techniques for parsing hook arguments and requesting information about the repository using lower-level Git commands.
+
+		Pre-Commit
+			Executed every time you run git commit before Git asks the developer for a commit message or generates a commit object. You can use this hook to inspect the snapshot that is about to be committed. E.g. if you want to run some automated tests that make sure the commit doesn't break any existing functionality.
+
+			No arguments are passed to the pre-commit script, and exiting with a non-zero status aborts the entire commit. This script aborts the commit if it finds any whitespace errors, as defined by the git diff-index command (trailing whitespace, lines with only whitespace, and a space followed by a tab inside the initial indent of a line are considered errors by default).
+
+				#!/bin/sh
+
+				# Check if this is the initial commit
+				if git rev-parse --verify HEAD >/dev/null 2>&1
+				then
+				 echo "pre-commit: About to create a new commit..."
+				 against=HEAD
+				else
+				 echo "pre-commit: About to create the first commit..."
+				 against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+				fi
+
+				# Use git diff-index to check for whitespace errors
+				echo "pre-commit: Testing for whitespace errors..."
+				if ! git diff-index --check --cached $against
+				then
+				 echo "pre-commit: Aborting commit due to whitespace errors"
+				 exit 1
+				else
+				 echo "pre-commit: No whitespace errors :)"
+				 exit 0
+				fi
+
+			This is just one example of the pre-commit hook. It happens to use existing Git commands to run tests on the changes introduced by the proposed commit, but you can do anything you want in pre-commit including executing other scripts, running a 3rd-party test suite, or checking code style with Lint.
+
+		Prepare Commit Message
+			This hook is called after the pre-commit hook to populate the text editor with a commit message. This is a good place to alter the automatically generated commit messages for squashed or merged commits. Exiting with a non-zero status aborts the commit.
+
+			One to three arguments are passed to the prepare-commit-msg script:
+			1. The name of a temporary file that contains the message. You change the commit message by altering this file in-place.
+			2. The type of commit. This can be message (-m or -F option), template (-t option), merge (if the commit is a merge commit), or squash (if the commit is squashing other commits).
+			3. The SHA1 hash of the relevant commit. Only given if -c, -C, or --amend option was given
+
+			When using an issue tracker, a common convention is to address each issue in a separate branch. If you include the issue number in the branch name, you can write a prepare-commit-msg hook to automatically include it in each commit message on that branch.
+
+				#!/usr/bin/env python
+
+				import sys, os, re
+				from subprocess import check_output
+
+				# Collect the parameters
+				commit_msg_filepath = sys.argv[1]
+				if len(sys.argv) > 2:
+				 commit_type = sys.argv[2]
+				else:
+				 commit_type = ''
+				if len(sys.argv) > 3:
+				 commit_hash = sys.argv[3]
+				else:
+				 commit_hash = ''
+
+				print "prepare-commit-msg: File: %s\nType: %s\nHash: %s" % (commit_msg_filepath, commit_type, commit_hash)
+
+				# Figure out which branch we're on
+				branch = check_output(['git', 'symbolic-ref', '--short', 'HEAD']).strip()
+				print "prepare-commit-msg: On branch '%s'" % branch
+
+				# Populate the commit message with the issue #, if there is one
+				if branch.startswith('issue-'):
+				 print "prepare-commit-msg: Oh hey, it's an issue branch."
+				 result = re.match('issue-(.*)', branch)
+				 issue_number = result.group(1)
+
+				 with open(commit_msg_filepath, 'r+') as f:
+				 content = f.read()
+				 f.seek(0, 0)
+				 f.write("ISSUE-%s %s" % (issue_number, content))
+
+			Keep in mind that this hook runs even when the user passes in a message with the -m option of git commit, which means that the script will automatically insert the ISSUE-[#] string without letting the user edit it (you can handle this case by seeing if the 2nd parameter (commit_type) is equal to message).
+
+			This is really more of a convenience script than a way to enforce a commit message policy - for that, you need the commit-msg hook below.
+
+		Commit Message
+			Much like the prepare-commit-msg hook, but called after the user enters a commit message. This is an appropriate place to warn developers that their message doesn't adhere to your team's standards.
+
+			The only argument passed to this hook is the name of the file that contains the message. If it doesn't like the message that the user entered, it can alter this file in-place (just like with prepare-commit-msg) or it can abort the commit entirely by exiting with a non-zero status.
+
+			e.g. the following script checks to make sure that the user didn't delete the ISSUE-[#] string that was automatically generated by the prepare-commit-msg hook in the previous section.
+
+				#!/usr/bin/env python
+
+				import sys, os, re
+				from subprocess import check_output
+
+				# Collect the parameters
+				commit_msg_filepath = sys.argv[1]
+
+				# Figure out which branch we're on
+				branch = check_output(['git', 'symbolic-ref', '--short', 'HEAD']).strip()
+				print "commit-msg: On branch '%s'" % branch
+
+				# Check the commit message if we're on an issue branch
+				if branch.startswith('issue-'):
+				 print "commit-msg: Oh hey, it's an issue branch."
+				 result = re.match('issue-(.*)', branch)
+				 issue_number = result.group(1)
+				 required_message = "ISSUE-%s" % issue_number
+
+				 with open(commit_msg_filepath, 'r') as f:
+				 content = f.read()
+				 if not content.startswith(required_message):
+				 print "commit-msg: ERROR! The commit message must start with '%s'" % required_message
+				 sys.exit(1)
+
+			While this script is called every time the user creates a commit, you should avoid doing much outside of checking the commit message. If you need to notify other services that a snapshot was committed, you should use the post-commit hook instead.
+
+		Post-Commit
+			Called immediately after the commit-msg hook. It can't change the outcome of the git commit operation, so it's used primarily for notification purposes.
+
+			The script takes no parameters and its exit status does not affect the commit in any way.
+
+			e.g. to email your boss every time you commit a snapshot (probably not the best idea for most workflows), you could add the following post-commit hook:
+
+				#!/usr/bin/env python
+
+				import smtplib
+				from email.mime.text import MIMEText
+				from subprocess import check_output
+
+				# Get the git log --stat entry of the new commit
+				log = check_output(['git', 'log', '-1', '--stat', 'HEAD'])
+
+				# Create a plaintext email message
+				msg = MIMEText("Look, I'm actually doing some work:\n\n%s" % log)
+
+				msg['Subject'] = 'Git post-commit hook notification'
+				msg['From'] = 'mary@example.com'
+				msg['To'] = 'boss@example.com'
+
+				# Send the message
+				SMTP_SERVER = 'smtp.example.com'
+				SMTP_PORT = 587
+
+				session = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+				session.ehlo()
+				session.starttls()
+				session.ehlo()
+				session.login(msg['From'], 'secretPassword')
+
+				session.sendmail(msg['From'], msg['To'], msg.as_string())
+				session.quit()
+
+			It's possible to use post-commit to trigger a local continuous integration system, but most of the time you’ll want to be doing this in the post-receive hook. This runs on the server instead of the user’s local machine, and it also runs every time any developer pushes their code. This makes it a much more appropriate place to perform your continuous integration.
+
+		Post-Checkout
+			Works a lot like post-commit hook, but called whenever you successfully check out a reference with git checkout. This is nice for clearing out your working directory of generated files that would otherwise cause confusion.
+
+			This hook accepts three parameters, and its exit status has no effect on the git checkout command.
+				1. The ref of the previous HEAD
+				2. The ref of the new HEAD
+				3. A flag telling you if it was a branch checkout or a file checkout. The flag will be 1 and 0, respectively.
+
+			A common problem with Python developers occurs when generated .pyc files stick around after switching branches. The interpreter sometimes uses these .pyc instead of the .py source file. To avoid any confusion, you can delete all .pyc files every time you check out a new branch using the following post-checkout script:
+
+				#!/usr/bin/env python
+
+				import sys, os, re
+				from subprocess import check_output
+
+				# Collect the parameters
+				previous_head = sys.argv[1]
+				new_head = sys.argv[2]
+				is_branch_checkout = sys.argv[3]
+
+				if is_branch_checkout == "0":
+				 print "post-checkout: This is a file checkout. Nothing to do."
+				 sys.exit(0)
+
+				print "post-checkout: Deleting all '.pyc' files in working directory"
+				for root, dirs, files in os.walk('.'):
+				 for filename in files:
+				 ext = os.path.splitext(filename)[1]
+				 if ext == '.pyc':
+				 os.unlink(os.path.join(root, filename))
+
+			You can also use the post-checkout hook to alter your working directory based on which branch you have checked out. For example, you might use a plugins branch to store all of your plugins outside of the core codebase. If these plugins require a lot of binaries that other branches do not, you can selectively build them only when you’re on the plugins branch.
+
+		Pre-Rebase
+			The pre-rebase hook is called before git rebase changes anything, making it a good place to make sure something terrible isn’t about to happen.
+
+			This hook takes 2 parameters: the upstream branch that the series was forked from, and the branch being rebased. The second parameter is empty when rebasing the current branch. To abort the rebase, exit with a non-zero status.
+
+			e.g. If you want to completely disallow rebasing in your repository, you could use the following pre-rebase script:
+
+				#!/bin/sh
+
+				# Disallow all rebasing
+				echo "pre-rebase: Rebasing is dangerous. Don't do it."
+				exit 1
+
+			For a more in-depth example, take a look at the included pre-rebase.sample script.
+
+	Server-side Hooks
+		Work just like local hooks, but they reside in server-side repos (e.g. a central repository). When attached to the official repository, some of these can serve as a way to enforce policy by rejecting certain commits.
+
+		3 server-side hooks are discussed here:
+			-pre-receive
+			-update
+			-post-receive
+
+		Together, these hooks allow you to react to different stages of the git push process.Output from server-side hooks are piped to the client's console (very easy to send messages back to the developer). Also keep in mind that these scripts don't return control of the terminal until they finish executing, so be careful about performing long-running operations.
+
+		Pre-Receive
+			This hook executes every time somebody uses git push to push commits to the repository. It should always reside in the remote repository that is the destination of the push, not the original repository.
+
+			It runs before any references are updated, so it's a good place to enforce any kind of development policy that you want. (e.g. if you don't like who is doing the pushing, how the commit message is formatted, or the changes contained in the commit, you can simply reject it). Even if you can't stop developers from making malformed commits, you can prevent these commits from entering the official codebase by rejecting them with pre-receive.
+
+			Takes no parameters, but each ref that is being pushed is passed to the script on a separate line on standard input in the following way:
+
+				<old-value> <new-value> <ref-name>
+
+			To see how this script works, you can use a very basic pre-receive script that just reads in the pushed refs and prints them back out:
+
+				#!/usr/bin/env python
+
+				import sys
+				import fileinput
+
+				# Read in each ref that the user is trying to update
+				for line in fileinput.input():
+				 print "pre-receive: Trying to push ref: %s" % line
+
+				# Abort the push
+				# sys.exit(1)
+
+			This is a little different than the other hooks because information is passed to the script via standard input instead of as command-line arguments. After placing the above script in the .git/hooks directory of a remote repository and pushing the master branch, you'll see something like the following on your console:
+
+				b6b36c697eb2d24302f89aa22d9170dfe609855b 85baa88c22b52ddd24d71f05db31f4e46d579095 refs/heads/master
+
+			You can use these SHA1 hashes, along with some lower-level Git commands, to inspect the changes that are going to be introduced. Some common use cases include:
+			-Rejecting changes that involve an upstream rebase
+			-Preventing non-fast-forward merges
+			-Checking that the user has the correct permissions to make the intended changes (mostly used for centralized Git workflows)
+
+			If multiple refs are pushed, returning a non-zero status from pre-receive aborts all of them. If you want to accept or reject branches on a case-by-case basis, you need to use the update hook instead.
+
+		Update
+			The update hook is called after pre-receive, and it works much the same way. It’s still called before anything is actually updated, but it’s called separately for each ref that was pushed. That means if the user tries to push 4 branches, update is executed 4 times. Unlike pre-receive, this hook doesn’t need to read from standard input. Instead, it accepts the following 3 arguments:
+				-The name of the ref being updated
+				-The old object name stored in the ref
+				-The new object name stored in the ref
+
+			This is the same info passed to pre-receive, but since update is invoked separately for each ref, you can reject some refs while allowing others.
+
+				#!/usr/bin/env python
+
+				import sys
+
+				branch = sys.argv[1]
+				old_commit = sys.argv[2]
+				new_commit = sys.argv[3]
+
+				print "Moving '%s' from %s to %s" % (branch, old_commit, new_commit)
+
+				# Abort pushing only this branch
+				# sys.exit(1)
+
+			The above update hook simply outputs the branch and the old/new commit hashes. When pushing more than one branch to the remote repository, you'll see the print statement execute for each branch.
+
+		Post-Receive
+			The post-receive hook gets called after a successful push operation, making it a good place to perform notifications. For many workflows, this is a better place to trigger notifications than post-commit because the changes are available on a public server instead of residing only on the user's local machine. Emailing other developers and triggering a continuous integration system are common use cases for post-receive.
+
+			The script takes no parameters, but is sent the same information as pre-receive via standard input.
+
+### Refs and the Reflog ###
+
+Git is all about commits: you stage commits, create commits, view old commits, and transfer commits between repositories using many different Git commands. The majority of these commands operate on a commit in some form or another, and many of them accept a commit reference as a parameter. For example, you can use git checkout to view an old commit by passing in a commit hash, or you can use it to switch branches by passing in a branch name.
+
+There is also a way to revive seemingly "lost" commits by accessing them through Git's reflog mechanism! (read on)
+
+Hashes
+	The most direct way to reference a commit is via its SHA-1 hash. This acts as the unique ID for each commit. You can find the hash of all your commits in the git log output.
+
+		-When passing the commit to other Git commands, you only need to specify enough characters to uniquely identify the commit.
+
+	To resolve a branch, tag, or another indirect reference into the corresponding commit hash, you can use the git rev-parse command. The following returns the hash of the commit pointed to by the master branch:
+
+		git rev-parse master
+
+	This is particularly useful when writing custom scripts that accept a commit reference. Instead of parsing the commit reference manually, you can let git rev-parse normalize the input for you.
+
+Refs
+	A ref is an indirect way of referring to a commit. You can think of it as a user-friendly alias for a commit hash. This is Git’s internal mechanism of representing branches and tags.
+
+	Refs are stored as normal text files in the .git/refs directory - look here to see branches, tags, and remotes you have in your repo!
+
+	The heads directory defines all of the local branches in your repository. Each filename matches the name of the corresponding branch, and inside the file you'll find a commit hash. This commit hash is the location of the tip of the branch.
+
+	This means that all Git has to do to change the location of the master branch is change the contents of the refs/heads/master file. Similarly, creating a new branch is simply a matter of writing a commit hash to a new file. This is part of the reason why Git branches are so lightweight compared to SVN.
+
+	Specifying Refs:
+	In 'git show some-feature', the some-feature argument is actually a short name for the branch. Git resolves this to refs/heads/some-feature before using it. You can also specify the full ref on the command line, such as 'git show refs/heads/some-feature' (this avoids any ambiguity regarding the location of the ref - this is necessary, for instance, if you had both a tag and a branch called some-feature).
+
+Packed Refs
+	For large repositories, Git will periodically perform a garbage collection to remove unnecessary objects and compress refs into a single file for more efficient performance. You can force this compression with the garbage collection command:
+
+		git gc
+
+	This moves all of the individual branch and tag files in the refs folder into a single file called packed-refs located in the top of the .git directory. If you open up this file, you'll find a mapping of commit hashes to refs. On the outside, normal Git functionality won't be affected in any way. But, if you're wondering why your .git/refs folder is empty, this is where the refs went!
+
+Special Refs
+	In addition to the refs directory, there are a few special refs that reside in the top-level .git directory:
+
+		HEAD - The currently checked-out commit/branch
+
+		FETCH_HEAD - The most recently fetched branch from a remote repo
+
+		ORIG_HEAD - A backup reference to HEAD before drastic changes to it
+
+		MERGE_HEAD - The commit(s) that you're merging into the current branch with git merge
+
+		CHERRY_PICK_HEAD - The commit that you're cherry-picking
+
+	These refs are all created and updated by Git when necessary. For example, The git pull command first runs git fetch, which updates the FETCH_HEAD reference. Then, it runs git merge FETCH_HEAD to finish pulling the fetched branches into the repository. Of course, you can use all of these like any other ref, as I’m sure you’ve done with HEAD. These files contain different content depending on their type and the state of your repo. The HEAD ref can contain either a symbolic ref, which is simply a reference to another ref instead of a commit hash, or a commit hash (e.g. take a look at the contents of HEAD when you're on the master branch - refs/heads/master - this is how Git knows that the master branch is currently checked out). If you are on a branch, the contents of HEAD will be updated to reflect the new branch. But if you were to check out a commit instead of a branch, HEAD would contain a commit hash instead of a symbolic ref. This is how Git knows that it's in a detached HEAD state.
+
+Refspecs
+	A refspec maps a branch in the local repository to a branch in a remote repository. This is what makes it possible to manage remote branches using local Git commands and to configure some advanced git push and git fetch behavior. A refspec is specified as [+]<src>:<dst>. The <src> parameter is the source branch in the local repository, and the <dst> parameter is the destination branch in the remote repository. The optional + sign is for forcing the remote repository to perform a non-fast-forward update.
+
+	Refspecs can be used with the git push command to give a different name to the remote branch. For example, the following command pushes the master branch to the origin remote repo like an ordinary git push, but it uses qa-master as the name for the branch in the origin repo. This is useful for QA teams that need to push their own branches to a remote repo:
+
+		git push origin master:refs/heads/qa-master
+
+	You can also use refspecs for deleting remote branches. This is a common situation for feature-branch workflows that push the feature branches to a remote repo (e.g., for backup purposes). The remote feature branches still reside in the remote repo after they are deleted from the local repo, so you get a build-up of dead feature branches as your project progresses. You can delete them by pushing a refspec that has an empty <src> parameter, like so:
+
+		git push origin :some-feature
+
+		As of Git v1.7.0, you can use the --delete flag instead of the above method
+		git push origin --delete some-feature (has the same effect)
+
+	By adding a few lines to the Git configuration file, you can use refspecs to alter the behavior of git fetch. By default, git fetch fetches all of the branches in the remote repository. The reason for this is the following section of the .git/config file:
+
+		[remote "origin"]
+ 		 url = https://git@github.com:mary/example-repo.git
+ 		 fetch = +refs/heads/*:refs/remotes/origin/*
+
+ 	The fetch line tells git fetch to download all of the branches from the origin repo. But, some workflows don’t need all of them. For example, many continuous integration workflows only care about the master branch. To fetch only the master branch, change the fetch line to match the following:
+
+ 		[remote "origin"]
+ 		 url = https://git@github.com:mary/example-repo.git
+ 		 fetch = +refs/heads/master:refs/remotes/origin/master
+
+ 	You can also configure git push in a similar manner. For instance, if you want to always push the master branch to qa-master in the origin remote (as we did above), you would change the config file to:
+
+ 		[remote "origin"]
+		 url = https://git@github.com:mary/example-repo.git
+		 fetch = +refs/heads/master:refs/remotes/origin/master
+		 push = refs/heads/master:refs/heads/qa-master
+
+	Refspecs give you complete control over how various Git commands transfer branches between repositories. They let you rename and delete branches from your local repository, fetch/push to branches with different names, and configure git push and git fetch to work with only the branches that you want.
+
+Relative Refs
+	You can also refer to commits relative to another commit. The ~ character lets you reach parent commits. For example, the following displays the grandparent of HEAD:
+
+		git show HEAD~2
+
+	But, when working with merge commits, things get a little more complicated. Since merge commits have more than one parent, there is more than one path that you can follow. For 3-way merges, the first parent is from the branch that you were on when you performed the merge, and the second parent is from the branch that you passed to the git merge command.
+
+	The ~ character will always follow the first parent of a merge commit. If you want to follow a different parent, you need to specify which one with the ^ character. For example, if HEAD is a merge commit, the following returns the second parent of HEAD.
+
+		git show HEAD^2
+
+	You can use more than one ^ character to move more than one generation. For instance, this displays the grandparent of HEAD (assuming it’s a merge commit) that rests on the second parent.
+
+		git show HEAD^2^1
+
+	Relative refs can be used with the same commands that a normal ref can be used. For example, all of the following commands use a relative reference:
+
+		# Only list commits that are parent of the second parent of a merge commit
+		git log HEAD^2
+
+		# Remove the last 3 commits from the current branch
+		git reset HEAD~3
+
+		# Interactively rebase the last 3 commits on the current branch
+		git rebase -i HEAD~3
+
+The Reflog
+	The reflog is Git’s safety net. It records almost every change you make in your repository, regardless of whether you committed a snapshot or not. You can think of it is a chronological history of everything you’ve done in your local repo. To view the reflog, run the 'git reflog' command. It should output something that looks like the following:
+
+		400e4b7 HEAD@{0}: checkout: moving from master to HEAD~2
+		0e25143 HEAD@{1}: commit (amend): Integrate some awesome feature into `master`
+		00f5425 HEAD@{2}: commit (merge): Merge branch ';feature';
+		ad8621a HEAD@{3}: commit: Finish the feature
+
+	This can be translated as follows:
+
+		-You just checked out HEAD~2
+		-Before that you amended a commit message
+		-Before that you merged the feature branch into master
+		-Before that you committed a snapshot
+
+	The HEAD@{<n>} syntax lets you reference commits stored in the reflog where the <n> refers to an entry in the reflog instead of the commit history.
+	You can use this to revert to a state that would otherwise be lost. For example, lets say you just scrapped a new feature with git reset. Your reflog might look something like this:
+
+		ad8621a HEAD@{0}: reset: moving to HEAD~3
+		298eb9f HEAD@{1}: commit: Some other commit message
+		bbe9012 HEAD@{2}: commit: Continue the feature
+		9cb79fa HEAD@{3}: commit: Start a new feature
+
+	The three commits before the git reset are now dangling, which means that there is no way to reference them—except through the reflog. Now, let’s say you realize that you shouldn’t have thrown away all of your work. All you have to do is check out the HEAD@{1} commit to get back to the state of your repository before you ran git reset.
+
+		git checkout HEAD@{1}
+
+	This puts you in a detached HEAD state. From here, you can create a new branch and continue working on your feature!
+
+### Git LFS ###
+
+	Git is a distributed version control system, meaning the entire history of the repository is transferred to the client during the cloning process. For projects containing large files, particularly large files that are modified regularly, this initial clone can take a huge amount of time, as every version of every file has to be downloaded by the client. Git LFS (Large File Storage) is a Git extension developed by Atlassian, GitHub, and a few other open source contributors, that reduces the impact of large files in your repository by downloading the relevant versions of them lazily. Specifically, large files are downloaded during the checkout process rather than during cloning or fetching.
+
+	Git LFS does this by replacing large files in your repository with tiny pointer files. During normal usage, you'll never see these pointer files as they are handled automatically by Git LFS:
